@@ -1,22 +1,16 @@
-// renderer.js
-const startButton = document.getElementById('startButton')
-const stopButton = document.getElementById('stopButton')
-const video = document.querySelector('video')
+// -- Tab Navigation -- 
 
-startButton.addEventListener('click', () => {
-  navigator.mediaDevices.getDisplayMedia({
-    audio: true,
-    video: {
-      width: 320,
-      height: 240,
-      frameRate: 30
-    }
-  }).then(stream => {
-    video.srcObject = stream
-    video.onloadedmetadata = (e) => video.play()
-  }).catch(e => console.log(e))
-})
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
 
-stopButton.addEventListener('click', () => {
-  video.pause()
-})
+// -- Feature -- Initialisation --
+
+initNotes();
+initMood();
+initPomodoro();

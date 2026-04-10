@@ -1,19 +1,60 @@
 // main.js
-const { app, BrowserWindow, desktopCapturer, session } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
+const fs = require('fs');
 
-app.whenReady().then(() => {
-  const mainWindow = new BrowserWindow()
+// -- File-based store (swap body for DB calls later) --
 
-  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
-    desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
-      // Grant access to the first screen found.
-      callback({ video: sources[0], audio: 'loopback' })
-    })
-    // If true, use the system picker if available.
-    // Note: this is currently experimental. If the system picker
-    // is available, it will be used and the media request handler
-    // will not be invoked.
-  }, { useSystemPicker: true })
+function getStorePath(name) {
+  return path.join(app.getPath('userData'), `${name}.json`);
+}
 
-  mainWindow.loadFile('index.html')
-})
+function readStore(name) {
+  try {
+    return JSON.parse(fs.readFileSync(getStorePath(name), 'utf8'));
+  } catch {
+    return [];
+  }
+}
+
+function writeStore(name, data) {
+  fs.writeFileSync(getStorePath(name), JSON.stringify(data, null, 2), 'utf8');
+}
+
+// -- IPC handlers --
+
+ipcMain.handle('notes:getAll', () => readStore('notes'));
+ipcMain.handle('notes:save', (_, notes) => writeStore('notes', notes));
+
+ipcMain.handle('mood:getAll', () => readStore('mood'));
+ipcMain.handle('mood:save', (_, entry) => {
+  const log = readStore('mood');
+  const idx = log.findIndex(e => e.datae === entry.date);
+  if (idx !== -1){
+    log[idx] = entry;
+  } else { 
+    log.push(entry);
+  }
+  writeStore('mood', log);
+});
+
+// -- Window --
+
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  win.loadFile('index.html');
+}
+
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
