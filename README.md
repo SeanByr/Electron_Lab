@@ -1,12 +1,12 @@
 # Electron Application
 
-**Setting up our First Electron Application**
+**_Setting up our First Electron Application_**
 
 ```
-_Planning_
+Planning
 
-_Implementaion_
+Implementaion
 
-_Testing_
+Testing
 
 ```
